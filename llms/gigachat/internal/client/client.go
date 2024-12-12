@@ -143,8 +143,8 @@ type CallRequest struct {
 	Messages          []Message      `json:"messages"`
 	Stream            bool           `json:"stream"`
 	RepetitionPenalty int            `json:"repetition_penalty"`
-	FunctionCall      string         `jsoh:"function_call"`
-	Funcions          []FunctionDesc `jsoh:"functions"`
+	FunctionCall      string         `json:"function_call"`
+	Funcions          []FunctionDesc `json:"functions"`
 }
 
 type Message struct {

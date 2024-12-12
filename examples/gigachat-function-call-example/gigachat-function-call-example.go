@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/tmc/langchaingo/llms"
@@ -23,13 +25,38 @@ func main() {
 	messageHistory := []llms.MessageContent{
 		llms.TextParts(llms.ChatMessageTypeHuman, "Какая погода в Перми?"),
 	}
-	respchoice, err := llm.GenerateContent(ctx, messageHistory, llms.WithTools(availableTools))
+
+	fmt.Println("Querying for weather in Perm..")
+	resp, err := llm.GenerateContent(ctx, messageHistory, llms.WithTools(availableTools))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_ = respchoice
+	fmt.Println("Response before function call:")
+	for _, respChoice := range resp.Choices {
+		byteRespChoice, _ := json.MarshalIndent(respChoice, " ", "  ")
+		fmt.Println(string(byteRespChoice))
+	}
 
+	// Translate the model's response into a MessageContent element that can be
+	// added to messageHistory.
+	respchoice := resp.Choices[0]
+	assistantResponse := llms.TextParts(llms.ChatMessageTypeAI, respchoice.Content)
+	for _, tc := range respchoice.ToolCalls {
+		assistantResponse.Parts = append(assistantResponse.Parts, tc)
+	}
+	messageHistory = append(messageHistory, assistantResponse)
+
+	resp, err = llm.GenerateContent(ctx, messageHistory, llms.WithTools(availableTools))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Response after function call:")
+	for _, respChoice := range resp.Choices {
+		byteRespChoice, _ := json.MarshalIndent(respChoice, " ", "  ")
+		fmt.Println(string(byteRespChoice))
+	}
 }
 
 // availableTools simulates the tools/functions we're making available for
